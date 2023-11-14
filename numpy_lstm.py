@@ -10,6 +10,9 @@ import numpy as np
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython import display
+
+plt.ion()
+
 #plt.style.use('seaborn-white')
 
 
@@ -428,9 +431,8 @@ def update_status(inputs, h_prev, C_prev):
     txt = ''.join(idx_to_char[idx] for idx in sample_idx)
 
     # Clear and plot
-    plt.plot(plot_iter, plot_loss)
-    display.clear_output(wait=True)
-    plt.show()
+    plt.plot(plot_iter, plot_loss, color='green')
+    plt.pause(0.1)
 
     #Print prediction and loss
     print("----\n %s \n----" % (txt, ))
