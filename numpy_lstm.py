@@ -7,14 +7,32 @@
 
 
 import numpy as np
-import numpy as np
 import matplotlib.pyplot as plt
-from IPython import display
+import customtkinter as ctk
+# from IPython import display
 
-plt.ion()
+# plt.ion()
 
 #plt.style.use('seaborn-white')
 
+# define GUI
+
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("dark-blue")
+
+root = ctk.CTk()
+root.geometry("800x600")
+
+frame = ctk.CTkFrame(master=root)
+frame.pack(padx=60, pady=20, fill="both", expand=True)
+
+label = ctk.CTkLabel(master=frame, text="Hello")
+label.pack(padx=10, pady=12)
+
+entry1 = ctk.CTkEntry(master=frame, placeholder_text="Text")
+entry1.pack(padx=10, pady=12)
+
+root.mainloop()
 
 # ### Read and process data
 
@@ -22,7 +40,6 @@ plt.ion()
 
 
 data = open('input.txt', 'r').read()
-#data = open('shakespear.txt', 'r').read()
 
 
 # Process data and calculate indexes
