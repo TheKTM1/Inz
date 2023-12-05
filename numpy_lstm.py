@@ -9,6 +9,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import customtkinter as ctk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # from IPython import display
 
 # plt.ion()
@@ -21,7 +22,7 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
 
 root = ctk.CTk()
-root.geometry("800x600")
+root.geometry("1280x720")
 
 frame = ctk.CTkFrame(master=root)
 frame.pack(padx=60, pady=20, fill="both", expand=True)
@@ -31,6 +32,9 @@ label.pack(padx=10, pady=12)
 
 entry1 = ctk.CTkEntry(master=frame, placeholder_text="Text")
 entry1.pack(padx=10, pady=12)
+
+button_quit = ctk.CTkButton(master=frame, text="Wyjdź", command=root.destroy) #uprzednio wyłączyć wykonywanie skryptu!
+button_quit.pack(padx=10, pady=12)
 
 # ### Read and process data
 
@@ -65,6 +69,17 @@ def main():
     weight_sd = 0.1 # Standard deviation of weights for initialization
     z_size = H_size + X_size # Size of concatenate(H, X) vector
 
+    global ax
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    
+    # fig.set_size_inches(8,4)
+    # ax.scatter(2,4,2*50,2)
+    # ax.axis("off")
+    # fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
+    canvas = FigureCanvasTkAgg(fig,master=root)
+    canvas.draw()
+    canvas.get_tk_widget().place(x=0, y=300)
 
     # ### Activation Functions and Derivatives
     # 
@@ -442,18 +457,23 @@ def main():
 
     def update_status(inputs, h_prev, C_prev):
         
+        global ax
         # Get predictions for 200 letters with current model
 
         sample_idx = sample(h_prev, C_prev, inputs[0], 200)
         txt = ''.join(idx_to_char[idx] for idx in sample_idx)
 
         # Clear and plot
-        plt.plot(plot_iter, plot_loss, color='green')
-        plt.pause(0.1)
+        # plt.plot(plot_iter, plot_loss, color='green')
+        # plt.pause(0.1)
+        ax.clear()
+        ax.plot(plot_iter, plot_loss)
+        canvas.draw()
 
         #Print prediction and loss
         print("----\n %s \n----" % (txt, ))
         print("iter %d, loss %f" % (iteration, smooth_loss))
+        root.update()
 
 
     # Update parameters
@@ -591,7 +611,6 @@ def main():
 
     # In[3]:
 
-
     def gradient_check(num_checks, delta, inputs, target, h_prev, C_prev):
         global parameters
         
@@ -630,5 +649,64 @@ def main():
 
     gradient_check(10, 1e-5, inputs, targets, g_h_prev, g_C_prev)
 
-# main()
+main()
 root.mainloop()
+
+
+
+
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import customtkinter as ctk
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# import time
+
+# # define GUI
+
+# ctk.set_appearance_mode("dark")
+# ctk.set_default_color_theme("dark-blue")
+
+# root = ctk.CTk()
+# root.geometry("800x600")
+
+# frame = ctk.CTkFrame(master=root)
+# frame.pack(padx=60, pady=20, fill="both", expand=True)
+
+# label = ctk.CTkLabel(master=frame, text="Hello")
+# label.pack(padx=10, pady=12)
+
+# entry1 = ctk.CTkEntry(master=frame, placeholder_text="Text")
+# entry1.pack(padx=10, pady=12)
+
+# def main():
+#     while(True):
+#         time.sleep(1)
+#         increase()
+
+# iteration = []
+# data = []
+# i = 0
+
+# def increase():
+#     global i
+#     i += 100
+#     iteration.append(i)
+#     data.append(i)
+#     print(i)
+#     ax.clear()
+#     ax.plot(iteration, data)
+#     canvas.draw()
+#     root.update()
+
+# fig, ax = plt.subplots(figsize=(3, 3))
+# # fig.set_size_inches(8,4)
+# # ax.scatter(2,4,2*50,2)
+# # ax.axis("off")
+# # fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
+# canvas = FigureCanvasTkAgg(fig,master=root)
+# canvas.draw()
+# canvas.get_tk_widget().place(x=0, y=0)
+# ax.plot(iteration, data)
+
+# main()
+# root.mainloop()
