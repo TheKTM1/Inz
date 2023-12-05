@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from PIL import Image
 # from IPython import display
 
 # plt.ion()
@@ -33,6 +34,10 @@ label.pack(padx=10, pady=12)
 entry1 = ctk.CTkEntry(master=frame, placeholder_text="Text")
 entry1.pack(padx=10, pady=12)
 
+img_pause = ctk.CTkImage(Image.open("graphics/pause-solid.png"), size=(10, 20))
+button_pause = ctk.CTkButton(master=frame, image=img_pause, command="")
+button_pause.pack(padx=10, pady=12)
+
 button_quit = ctk.CTkButton(master=frame, text="Wyjdź", command=root.destroy) #uprzednio wyłączyć wykonywanie skryptu!
 button_quit.pack(padx=10, pady=12)
 
@@ -43,8 +48,6 @@ button_quit.pack(padx=10, pady=12)
 def main():
 
     data = open('input.txt', 'r').read()
-    print("Odpala się")
-
 
     # Process data and calculate indexes
 
@@ -79,7 +82,7 @@ def main():
     # fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
     canvas = FigureCanvasTkAgg(fig,master=root)
     canvas.draw()
-    canvas.get_tk_widget().place(x=0, y=300)
+    canvas.get_tk_widget().place(x=0, y=0)
 
     # ### Activation Functions and Derivatives
     # 
