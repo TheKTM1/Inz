@@ -8,7 +8,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import json
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # import matplotlib.pyplot as plt
 # from IPython import display, get_ipython
 # get_ipython().run_line_magic('matplotlib', 'inline')
@@ -22,8 +23,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 data = open('input.txt', 'r', encoding='utf-8').read()
 
-collected_data = {}
-
 # Process data and calculate indexes
 
 # In[3]:
@@ -34,7 +33,6 @@ data_size, X_size = len(data), len(chars)
 print("data has %d characters, %d unique" % (data_size, X_size))
 char_to_idx = {ch:i for i,ch in enumerate(chars)}
 idx_to_char = {i:ch for i,ch in enumerate(chars)}
-
 
 # ### Constants and Hyperparameters
 
@@ -47,6 +45,25 @@ learning_rate = 1e-1 # Learning rate
 weight_sd = 0.1 # Standard deviation of weights for initialization
 z_size = H_size + X_size # Size of concatenate(H, X) vector
 
+collected_data = {
+    "name": "bcde",
+    "h_size": H_size,
+    "t_steps": T_steps,
+    "input_text_size": data_size,
+    "iterations": [],
+    "loss": [],
+    "time_delta": []
+}
+
+def export_data():
+    toExport = json.dumps(collected_data)
+
+    try:
+        with open(f"../lstm-backend/export_data/{collected_data["name"]}.txt", "x") as file:
+            file.write(toExport)
+        print(f"File {collected_data["name"]}.txt created.")
+    except FileExistsError:
+        print("A file with this name already exists.")
 
 # ### Activation Functions and Derivatives
 # 
@@ -390,8 +407,8 @@ def forward_backward(inputs, targets, h_prev, C_prev):
 def collect_data(iteration, smooth_loss):
     global collected_data
 
-    print(iteration)
-    print(smooth_loss)
+    collected_data["iterations"].append(iteration)
+    collected_data["loss"].append(smooth_loss)
 
 # ### Sample the next character
 
@@ -475,6 +492,7 @@ class DelayedKeyboardInterrupt(object):
 
     def handler(self, sig, frame):
         self.signal_received = (sig, frame)
+        export_data()
         print('SIGINT received. Delaying KeyboardInterrupt.')
 
     def __exit__(self, type, value, traceback):
