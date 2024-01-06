@@ -9,6 +9,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+from timeit import default_timer
+# from datetime import timedelta
+
 # from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # import matplotlib.pyplot as plt
 # from IPython import display, get_ipython
@@ -46,22 +49,22 @@ weight_sd = 0.1 # Standard deviation of weights for initialization
 z_size = H_size + X_size # Size of concatenate(H, X) vector
 
 collected_data = {
-    "name": "bcde",
+    "name": f"H{H_size}_S{T_steps}_I{data_size}_0",
     "h_size": H_size,
     "t_steps": T_steps,
-    "input_text_size": data_size,
+    "input_text_size": data_size,   #something about this
     "iterations": [],
     "loss": [],
-    "time_delta": []
+    "time_total": []    #the diagram would require different H_sizes and T_steps vs absolute time
 }
 
 def export_data():
     toExport = json.dumps(collected_data)
 
     try:
-        with open(f"../lstm-backend/export_data/{collected_data["name"]}.txt", "x") as file:
+        with open(f"../lstm-backend/export_data/{collected_data["name"]}.json", "x") as file:
             file.write(toExport)
-        print(f"File {collected_data["name"]}.txt created.")
+        print(f"File {collected_data["name"]}.json created.")
     except FileExistsError:
         print("A file with this name already exists.")
 
@@ -404,11 +407,12 @@ def forward_backward(inputs, targets, h_prev, C_prev):
         
     return loss, h_s[len(inputs) - 1], C_s[len(inputs) - 1]
 
-def collect_data(iteration, smooth_loss):
+def collect_data(iteration, smooth_loss, time_passed):
     global collected_data
 
     collected_data["iterations"].append(iteration)
     collected_data["loss"].append(smooth_loss)
+    collected_data["time_total"].append(time_passed)
 
 # ### Sample the next character
 
@@ -457,7 +461,7 @@ def update_status(inputs, h_prev, C_prev):
 
     #Print prediction and loss
     print("----\n %s \n----" % (txt, ))
-    print("Iteracja %d, strata %f" % (iteration, smooth_loss))
+    print("Iteracja %d, strata %f, czas %f" % (iteration, smooth_loss, time_passed))
 
 
 # Update parameters
@@ -510,6 +514,9 @@ smooth_loss = -np.log(1.0 / X_size) * T_steps
 
 iteration, pointer = 0, 0
 
+start_time = default_timer()
+time_passed = 0
+
 # For the graph
 plot_iter = np.zeros((0))
 plot_loss = np.zeros((0))
@@ -545,7 +552,7 @@ while True:
             
             # Collect data every one thousand steps
             if iteration % 1000 == 0:
-                collect_data(iteration, smooth_loss)
+                collect_data(iteration, smooth_loss, time_passed)
 
             update_paramters()
 
@@ -554,6 +561,13 @@ while True:
 
             pointer += T_steps
             iteration += 1
+            time_passed = default_timer() - start_time
+
+            #stop the program after an iteration limit
+            if iteration > 2000000:
+                DelayedKeyboardInterrupt().handler(signal.SIGINT, None)
+                raise KeyboardInterrupt
+
     except KeyboardInterrupt:
         update_status(inputs, g_h_prev, g_C_prev)
         break
