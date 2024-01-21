@@ -7,7 +7,7 @@
 
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import json
 from timeit import default_timer
 # from datetime import timedelta
@@ -23,8 +23,22 @@ from timeit import default_timer
 
 # In[6]:
 
+textAvailable = False
+data = None
+text_input = None
 
-data = open('input.txt', 'r', encoding='utf-8').read()
+while not textAvailable:
+    print(f"Nazwa pliku tekstowego:")
+    text_input = input()
+
+    try:
+        with open(f"inputs/{text_input}.txt", 'r', encoding='utf-8') as file:
+            data = file.read()
+            textAvailable = True
+    except FileNotFoundError:
+        print(f"Plik '{text_input}'.txt nie został odnaleziony.")
+    except Exception as e:
+        print(f"Błąd: {e}")
 
 # Process data and calculate indexes
 
@@ -37,25 +51,47 @@ print("data has %d characters, %d unique" % (data_size, X_size))
 char_to_idx = {ch:i for i,ch in enumerate(chars)}
 idx_to_char = {i:ch for i,ch in enumerate(chars)}
 
+# Inputs
+
+print(f"Nazwa pliku:")
+name_input = input()
+
+print(f"Rozmiar warstwy ukrytej (domyślnie 100):")
+hsize_input = input()
+
+print(f"Liczba kroków czasu (domyślnie 25):")
+tsteps_input = input()
+
+print(f"Prędkość uczenia (domyślnie 0.1):")
+lrate_input = input()
+
+print(f"Odchylenie standardowe wag (domyślnie 0.1):")
+sd_input = input()
+
 # ### Constants and Hyperparameters
 
 # In[4]:
 
 
-H_size = 100 # Size of the hidden layer
-T_steps = 25 # Number of time steps (length of the sequence) used for training
-learning_rate = 1e-1 # Learning rate
-weight_sd = 0.1 # Standard deviation of weights for initialization
+H_size = int(hsize_input) if hsize_input else 100 # Size of the hidden layer, default: 100
+T_steps = int(tsteps_input) if tsteps_input else 25 # Number of time steps (length of the sequence) used for training, default: 25
+learning_rate = float(lrate_input) if lrate_input else 0.1 # Learning rate, default: 1e-1
+weight_sd = float(sd_input) if sd_input else 0.1 # Standard deviation of weights for initialization, default: 0.1
 z_size = H_size + X_size # Size of concatenate(H, X) vector
 
+iteration_limit = 10000
+
 collected_data = {
-    "name": f"H{H_size}_S{T_steps}_I{data_size}_0",
+    "name": f"H{H_size}_S{T_steps}_I{X_size}_{name_input}",
     "h_size": H_size,
     "t_steps": T_steps,
-    "input_text_size": data_size,   #something about this
+    "learning_rate": learning_rate,
+    "weight_sd": weight_sd,
+    "input_text_size": X_size,
+    "input_text": text_input,
     "iterations": [],
     "loss": [],
-    "time_total": []    #the diagram would require different H_sizes and T_steps vs absolute time
+    "time_total": []
 }
 
 def export_data():
@@ -388,6 +424,8 @@ def forward_backward(inputs, targets, h_prev, C_prev):
             forward(x_s[t], h_s[t - 1], C_s[t - 1]) # Forward pass
             
         loss += -np.log(y_s[t][targets[t], 0]) # Loss for at t
+        # loss += np.exp(-(y_s[t][targets[t], 0])) # Exponential loss
+        # loss += np.arctan(y_s[t][targets[t], 0]) # Tangent loss
         
     clear_gradients()
 
@@ -456,8 +494,8 @@ def update_status(inputs, h_prev, C_prev):
     txt = ''.join(idx_to_char[idx] for idx in sample_idx)
 
     # Clear and plot
-    plt.plot(plot_iter, plot_loss, color='green')
-    plt.pause(0.1)
+    # plt.plot(plot_iter, plot_loss, color='green')
+    # plt.pause(0.1)
 
     #Print prediction and loss
     print("----\n %s \n----" % (txt, ))
@@ -510,7 +548,10 @@ class DelayedKeyboardInterrupt(object):
 
 # Exponential average of loss
 # Initialize to a error of a random model
+            
 smooth_loss = -np.log(1.0 / X_size) * T_steps
+# smooth_loss = np.exp(1.0) * X_size
+# smooth_loss = np.arctan(1.0) * X_size
 
 iteration, pointer = 0, 0
 
@@ -564,7 +605,7 @@ while True:
             time_passed = default_timer() - start_time
 
             #stop the program after an iteration limit
-            if iteration > 2000000:
+            if iteration > iteration_limit:
                 DelayedKeyboardInterrupt().handler(signal.SIGINT, None)
                 raise KeyboardInterrupt
 
