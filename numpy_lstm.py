@@ -9,6 +9,8 @@
 import numpy as np
 # import matplotlib.pyplot as plt
 import json
+import psutil
+import os
 from timeit import default_timer
 # from datetime import timedelta
 
@@ -91,7 +93,8 @@ collected_data = {
     "input_text": text_input,
     "iterations": [],
     "loss": [],
-    "time_total": []
+    "time_total": [],
+    "ram_usage": []
 }
 
 def export_data():
@@ -445,12 +448,19 @@ def forward_backward(inputs, targets, h_prev, C_prev):
         
     return loss, h_s[len(inputs) - 1], C_s[len(inputs) - 1]
 
-def collect_data(iteration, smooth_loss, time_passed):
+def getMemoryUsage():
+    process = psutil.Process(os.getpid())
+    memory_bytes = process.memory_info().rss
+    memory_mb = memory_bytes / 1024 / 1024
+    return memory_mb
+
+def collect_data(iteration, smooth_loss, time_passed, ram_used):
     global collected_data
 
     collected_data["iterations"].append(iteration)
     collected_data["loss"].append(smooth_loss)
     collected_data["time_total"].append(time_passed)
+    collected_data["ram_usage"].append(ram_used)
 
 # ### Sample the next character
 
@@ -499,7 +509,7 @@ def update_status(inputs, h_prev, C_prev):
 
     #Print prediction and loss
     print("----\n %s \n----" % (txt, ))
-    print("Iteracja %d, strata %f, czas %f" % (iteration, smooth_loss, time_passed))
+    print("Iteracja %d, strata %f, czas %f, RAM %f" % (iteration, smooth_loss, time_passed, ram_used))
 
 
 # Update parameters
@@ -558,6 +568,9 @@ iteration, pointer = 0, 0
 start_time = default_timer()
 time_passed = 0
 
+start_ram = getMemoryUsage()
+ram_used = 0
+
 # For the graph
 plot_iter = np.zeros((0))
 plot_loss = np.zeros((0))
@@ -593,7 +606,7 @@ while True:
             
             # Collect data every one thousand steps
             if iteration % 1000 == 0:
-                collect_data(iteration, smooth_loss, time_passed)
+                collect_data(iteration, smooth_loss, time_passed, ram_used)
 
             update_paramters()
 
@@ -603,6 +616,7 @@ while True:
             pointer += T_steps
             iteration += 1
             time_passed = default_timer() - start_time
+            ram_used = getMemoryUsage() - start_ram
 
             #stop the program after an iteration limit
             if iteration > iteration_limit:
